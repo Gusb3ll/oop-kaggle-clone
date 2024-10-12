@@ -6,28 +6,39 @@ import {
 import fs from 'fs'
 import path from 'path'
 
+import { Path } from './app.dto'
+
 @Injectable()
 export class AppService {
   async getPaths(dir?: string) {
     try {
       const dataDir = path.join(process.cwd(), `./data${dir ? `/${dir}` : ''}`)
 
-      const tree: { name: string; type: string }[] = []
+      const tree: Path = {
+        name: 'root',
+        checked: 0,
+        isOpen: true,
+        children: [],
+      }
       const files = fs.readdirSync(dataDir)
 
-      files.map(file => {
+      files.map(async file => {
         const filePath = path.join(dataDir, file)
         const stats = fs.statSync(filePath)
 
         if (stats.isDirectory()) {
-          tree.push({
+          tree.children!.push({
             name: file,
-            type: 'directory',
+            checked: 0,
+            isOpen: false,
+            children: (await this.getPaths(dir ? `${dir}/${file}` : file))
+              .children,
           })
         } else {
-          tree.push({
+          tree.children!.push({
             name: file,
-            type: 'file',
+            checked: 0,
+            isOpen: false,
           })
         }
       })
@@ -56,6 +67,8 @@ export class AppService {
 
       if (targetFilePath.endsWith('.dcm')) {
         return { type: 'dcm', base64: fileBuf.toString('base64') }
+      } else if (targetFilePath.endsWith('.csv')) {
+        return { type: 'csv', base64: fileBuf.toString('base64') }
       }
     } catch {
       throw new NotFoundException('File not found')

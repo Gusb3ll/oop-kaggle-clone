@@ -1,47 +1,69 @@
+import 'react-folder-tree/dist/style.css'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import cornerstone, { enable } from 'cornerstone-core'
 // @ts-expect-error
 import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader'
 import dicomParser from 'dicom-parser'
 import { useEffect, useState } from 'react'
+import FolderTree, { NodeData } from 'react-folder-tree'
 import { toast } from 'sonner'
-
-import FileTree from './FileTree'
 
 import { Path, getFileMetadata, getPath } from '@/services'
 import { ENDPOINT } from '@/utils/fetchers'
+
+type PathWithUrl = Path & { url: string }
 
 const Data = () => {
   const [imageData, setImageData] = useState<{
     url: string
     dataSet: dicomParser.DataSet
   } | null>(null)
-  const [currentTree, setCurrentTree] = useState<Path[]>([])
 
-  useQuery({
+  const addUrl = (node: PathWithUrl, parentUrl = '') => {
+    const currentUrl = `${parentUrl}/${node.name}`
+
+    node.url = currentUrl
+
+    if (node.children) {
+      node.children = node.children.map(child =>
+        addUrl(child as PathWithUrl, currentUrl),
+      )
+    }
+
+    return node
+  }
+  const { data: tree } = useQuery({
     queryKey: ['getPath'],
-    queryFn: async () => {
-      const res = await getPath()
-      setCurrentTree(res)
-
-      return res
-    },
+    queryFn: () => getPath(),
   })
   const getFileMetadataMutation = useMutation({
     mutationKey: ['getFileMetadata'],
     mutationFn: (filePath: string) => getFileMetadata(filePath),
   })
 
-  const onRender = async () => {
+  const onNameClick = async ({ nodeData }: { nodeData: NodeData }) => {
+    const { url } = nodeData
+
+    const renderUrl = url.replaceAll('/root/', '')
+    await onRender(renderUrl)
+  }
+
+  const onRender = async (renderUrl: string) => {
     try {
-      const res = await getFileMetadataMutation.mutateAsync('1.dcm')
+      if (!renderUrl) {
+        return toast.error('No file selected')
+      }
+
+      const res = await getFileMetadataMutation.mutateAsync(renderUrl)
+
+      console.log(res)
 
       if (res.type === 'dcm') {
         const buffer = Buffer.from(res.base64, 'base64')
         const dataSet = dicomParser.parseDicom(buffer)
 
         setImageData({
-          url: `wadouri://${ENDPOINT.replaceAll('http://', '')}/file/1.dcm`,
+          url: `wadouri://${ENDPOINT.replaceAll('http://', '')}/file${renderUrl}`,
           dataSet: dataSet,
         })
       }
@@ -152,17 +174,27 @@ const Data = () => {
           </div>
         </div>
       </div>
-      <div className="flex flex-row justify-between gap-8">
-        <div className="flex flex-col gap-8">
-          <div id="dicom-image" className="h-[600px] w-full" />
+      <div className="mt-8 grid w-full grid-cols-5 gap-8">
+        <div className="col-span-3 flex h-full flex-col items-center justify-center gap-8 rounded-xl border border-gray-300">
+          <div id="dicom-image" className="p-8" />
         </div>
-        <button onClick={() => onRender()}>RENDER 1.dcm</button>
-        <div className="mt-8 flex w-[50%] flex-col gap-4">
+        <div className="col-span-2 flex w-full flex-col gap-4">
           <div className="flex flex-col">
             <h1>Data Explorer</h1>
             <p>35.34 GB</p>
           </div>
-          <FileTree currentTree={currentTree} setCurrentTree={setCurrentTree} />
+          <div className="max-h-[400px] overflow-y-auto">
+            {tree ? (
+              <FolderTree
+                data={addUrl(tree as PathWithUrl)}
+                showCheckbox={false}
+                readOnly={true}
+                onNameClick={onNameClick}
+              />
+            ) : (
+              <></>
+            )}
+          </div>
         </div>
       </div>
     </>
