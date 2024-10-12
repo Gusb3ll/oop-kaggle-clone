@@ -21,7 +21,7 @@ const Home = () => {
 
   return (
     <>
-      <NextSeo title="RSNA 2024 Lumbar Spine Degenerative Classification" />
+      <NextSeo title="CLONE - RSNA 2024 Lumbar Spine Degenerative Classification" />
       <div className="flex h-full w-screen flex-row">
         <div className="flex flex-col items-center gap-2 border-r border-r-gray-200 px-2 py-4">
           <div className="mt-12 flex w-full rounded-full p-1 shadow-gray-300">

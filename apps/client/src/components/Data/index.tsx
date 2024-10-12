@@ -4,6 +4,7 @@ import cornerstone, { enable } from 'cornerstone-core'
 // @ts-expect-error
 import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader'
 import dicomParser from 'dicom-parser'
+import PapaParse from 'papaparse'
 import { useEffect, useState } from 'react'
 import FolderTree, { NodeData } from 'react-folder-tree'
 import { toast } from 'sonner'
@@ -78,6 +79,10 @@ const Data: React.FC = () => {
       } else if (res.type === 'csv') {
         setIsCsv(true)
         setImageData(null)
+        const buffer = Buffer.from(res.base64, 'base64')
+        const csv = PapaParse.parse(buffer.toString(), { header: true })
+
+        console.log(csv)
       }
     } catch (e) {
       toast.error((e as Error).message)

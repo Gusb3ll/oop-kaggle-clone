@@ -21,7 +21,7 @@ export class AppController {
 
     const fileBuf = await this.service.getFile(path)
 
-    res.type('application/dicom').send(fileBuf)
+    res.type('application/octet-stream').send(fileBuf)
   }
 
   @Get('/file-metadata*')

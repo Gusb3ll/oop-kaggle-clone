@@ -2,7 +2,8 @@
   "name": "@kaggle/server",
   "scripts": {
     "dev": "nest start -b swc -w",
-    "build": "rimraf dist && nest build --webpack"
+    "build": "rimraf dist && nest build --webpack",
+    "start": "node dist/main"
   },
   "dependencies": {
     "@fastify/static": "7.0.4",
