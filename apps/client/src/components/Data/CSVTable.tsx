@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   BarElement,
   CategoryScale,
@@ -13,7 +14,7 @@ import { Bar } from 'react-chartjs-2'
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 type CSVTableProps = {
-  csv: any
+  csv: { [key: string]: number | string }[]
 }
 
 const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
@@ -24,20 +25,21 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
       return
     }
 
-    const newChartData = {}
+    const newChartData: any = {}
     const headers = Object.keys(csv[0])
 
     headers.forEach(header => {
       const values = csv.map(row => row[header])
       const numericValues = values.filter(
-        value => !isNaN(parseFloat(value)) && isFinite(value),
+        value => !isNaN(parseFloat(value as any)) && isFinite(value as any),
       )
       const valueCount = values.length - 1
 
       if (valueCount > 10) {
         if (numericValues.length > 0) {
-          const counts = numericValues.reduce((acc, value) => {
+          const counts = numericValues.reduce((acc: any, value) => {
             acc[value] = (acc[value] || 0) + 1
+
             return acc
           }, {})
 
@@ -144,10 +146,10 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
                 </td>
               ))}
             </tr>
-            {currentRows.map((row: any, rowIndex: number) => (
-              <tr key={rowIndex}>
-                {Object.values(row).map((cell: any, cellIndex: number) => (
-                  <td key={cellIndex} className="border px-4 py-2">
+            {currentRows.map((row, i) => (
+              <tr key={`r_${i}`}>
+                {Object.values(row).map((cell, i) => (
+                  <td key={`c_${i}`} className="border px-4 py-2">
                     {cell}
                   </td>
                 ))}
