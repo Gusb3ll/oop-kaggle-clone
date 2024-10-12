@@ -99,9 +99,7 @@ const Data: React.FC = () => {
         .then(image => {
           cornerstone.displayImage(element, image)
         })
-        .catch(error => {
-          console.error('Error : ', error)
-        })
+        .catch(e => toast.error((e as Error).message))
     }
   }, [imageData])
 
