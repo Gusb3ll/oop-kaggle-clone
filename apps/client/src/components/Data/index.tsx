@@ -13,15 +13,27 @@ import DataInfo from './Info'
 import { Path, getFileMetadata, getPath } from '@/services'
 import { ENDPOINT } from '@/utils/fetchers'
 
-type PathWithUrl = Path & { url: string }
+export type PathWithUrl = Path & { url: string }
+type ImageData = {
+  url: string
+  dataSet: dicomParser.DataSet
+}
 
-const Data = () => {
-  const [imageData, setImageData] = useState<{
-    url: string
-    dataSet: dicomParser.DataSet
-  } | null>(null)
+const Data: React.FC = () => {
+  const [imageData, setImageData] = useState<ImageData | null>(null)
   const [isCsv, setIsCsv] = useState(false)
 
+  const { data: tree } = useQuery({
+    queryKey: ['getPath'],
+    queryFn: () => getPath(),
+  })
+
+  const getFileMetadataMutation = useMutation({
+    mutationKey: ['getFileMetadata'],
+    mutationFn: (filePath: string) => getFileMetadata(filePath),
+  })
+
+  // dynamically assign url to each node within the tree
   const addUrl = (node: PathWithUrl, parentUrl = '') => {
     const currentUrl = `${parentUrl}/${node.name}`
 
@@ -35,27 +47,18 @@ const Data = () => {
 
     return node
   }
-  const { data: tree } = useQuery({
-    queryKey: ['getPath'],
-    queryFn: () => getPath(),
-  })
-  const getFileMetadataMutation = useMutation({
-    mutationKey: ['getFileMetadata'],
-    mutationFn: (filePath: string) => getFileMetadata(filePath),
-  })
 
-  const onNameClick = async ({ nodeData }: { nodeData: NodeData }) => {
+  const handleFileClick = async ({ nodeData }: { nodeData: NodeData }) => {
     const { url } = nodeData
-
     if (['.dcm', '.csv'].every(ext => !url.endsWith(ext))) {
       return
     }
 
     const renderUrl = url.replaceAll('/root/', '')
-    await onRender(renderUrl)
+    await handleFileRender(renderUrl)
   }
 
-  const onRender = async (renderUrl: string) => {
+  const handleFileRender = async (renderUrl: string) => {
     try {
       if (!renderUrl) {
         return toast.error('No file selected')
@@ -69,12 +72,10 @@ const Data = () => {
         const buffer = Buffer.from(res.base64, 'base64')
         const dataSet = dicomParser.parseDicom(buffer)
 
-        setImageData({
-          url: `wadouri://${ENDPOINT.replaceAll('http://', '')}/file${renderUrl}`,
-          dataSet: dataSet,
-        })
-      }
-      if (res.type === 'csv') {
+        const url = `wadouri://${ENDPOINT.replaceAll('http://', '')}/file${renderUrl}`
+
+        setImageData({ url, dataSet })
+      } else if (res.type === 'csv') {
         setIsCsv(true)
         setImageData(null)
       }
@@ -127,7 +128,7 @@ const Data = () => {
               data={addUrl(tree as PathWithUrl)}
               showCheckbox={false}
               readOnly={true}
-              onNameClick={onNameClick}
+              onNameClick={handleFileClick}
             />
           ) : (
             <></>
