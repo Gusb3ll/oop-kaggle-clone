@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import FolderTree, { NodeData } from 'react-folder-tree'
 import { toast } from 'sonner'
 
+import CSVTable from './CSVTable'
 import DataInfo from './Info'
 
 import { Path, getFileMetadata, getPath } from '@/services'
@@ -23,6 +24,7 @@ type ImageData = {
 const Data: React.FC = () => {
   const [imageData, setImageData] = useState<ImageData | null>(null)
   const [isCsv, setIsCsv] = useState(false)
+  const [csvData, setCsvData] = useState<any[]>([])
 
   const { data: tree } = useQuery({
     queryKey: ['getPath'],
@@ -82,7 +84,7 @@ const Data: React.FC = () => {
         const buffer = Buffer.from(res.base64, 'base64')
         const csv = PapaParse.parse(buffer.toString(), { header: true })
 
-        console.log(csv)
+        setCsvData(csv.data)
       }
     } catch (e) {
       toast.error((e as Error).message)
@@ -111,17 +113,18 @@ const Data: React.FC = () => {
   return (
     <>
       <DataInfo />
+
       <div className="mt-8 grid w-full grid-cols-6 gap-8">
         {isCsv ? (
-          <div className="col-span-4 h-[600px] w-full rounded-xl border border-gray-300 p-4">
-            kuy
+          <div className="col-span-4 h-[600px] w-full overflow-x-auto rounded-xl border border-gray-300 p-4">
+            <CSVTable csv={csvData} />
           </div>
         ) : (
           <div className="col-span-4 h-[600px] w-full rounded-xl border border-gray-300 p-4">
             <div id="dicom-image" className="h-full" />
           </div>
         )}
-        <div className="col-span-2 flex max-h-[400px] w-full flex-col overflow-y-auto">
+        <div className="col-span-2 flex max-h-[400px] w-full flex-col overflow-y-auto border-b border-gray-300">
           <div className="flex flex-col">
             <h1 className="font-bold">Data Explorer</h1>
             <p>35.34 GB</p>
