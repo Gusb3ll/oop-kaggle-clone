@@ -6,19 +6,26 @@ import dicomParser from 'dicom-parser'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { getFileMetadata, getPath } from '@/services'
+import FileTree from './FileTree'
+
+import { Path, getFileMetadata, getPath } from '@/services'
 import { ENDPOINT } from '@/utils/fetchers'
 
 const Data = () => {
   const [imageData, setImageData] = useState<{
-    id: string
-    dicom: dicomParser.DataSet
+    url: string
+    dataSet: dicomParser.DataSet
   } | null>(null)
-  // const [currentPath, setCurrentPath] = useState<string>('/')
+  const [currentTree, setCurrentTree] = useState<Path[]>([])
 
-  const { data: tree } = useQuery({
+  useQuery({
     queryKey: ['getPath'],
-    queryFn: () => getPath(),
+    queryFn: async () => {
+      const res = await getPath()
+      setCurrentTree(res)
+
+      return res
+    },
   })
   const getFileMetadataMutation = useMutation({
     mutationKey: ['getFileMetadata'],
@@ -34,8 +41,8 @@ const Data = () => {
         const dataSet = dicomParser.parseDicom(buffer)
 
         setImageData({
-          id: `wadouri://${ENDPOINT.replaceAll('http://', '')}/file/1.dcm`,
-          dicom: dataSet,
+          url: `wadouri://${ENDPOINT.replaceAll('http://', '')}/file/1.dcm`,
+          dataSet: dataSet,
         })
       }
     } catch (e) {
@@ -56,9 +63,8 @@ const Data = () => {
 
     if (imageData) {
       cornerstone
-        .loadImage(imageData.id)
+        .loadImage(imageData.url)
         .then(image => {
-          console.log(image)
           cornerstone.displayImage(element, image)
         })
         .catch(error => {
@@ -149,7 +155,6 @@ const Data = () => {
       <div className="flex flex-row justify-between gap-8">
         <div className="flex flex-col gap-8">
           <div id="dicom-image" className="h-[600px] w-full" />
-          {JSON.stringify(tree)}
         </div>
         <button onClick={() => onRender()}>RENDER 1.dcm</button>
         <div className="mt-8 flex w-[50%] flex-col gap-4">
@@ -157,6 +162,7 @@ const Data = () => {
             <h1>Data Explorer</h1>
             <p>35.34 GB</p>
           </div>
+          <FileTree currentTree={currentTree} setCurrentTree={setCurrentTree} />
         </div>
       </div>
     </>

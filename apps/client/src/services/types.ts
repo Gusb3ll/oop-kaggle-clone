@@ -1,6 +1,6 @@
 export type Path = {
   name: string
-  type: string
+  type: 'file' | 'directory'
 }
 
 export type GetPathResponse = Path[]
