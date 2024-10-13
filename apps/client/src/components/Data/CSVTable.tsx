@@ -69,6 +69,7 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
     })
 
     setChartData(newChartData)
+    setCurrentPage(1)
   }, [csv])
 
   const [currentPage, setCurrentPage] = useState(1)

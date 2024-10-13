@@ -122,6 +122,7 @@ const Data: React.FC = () => {
         ) : (
           <div className="col-span-4 h-[600px] w-full rounded-xl border border-gray-300 p-4">
             <div id="dicom-image" className="h-full" />
+            {/* {JSON.stringify(imageData?.dataSet)} */}
           </div>
         )}
         <div className="col-span-2 flex max-h-[400px] w-full flex-col overflow-y-auto border-b border-gray-300">
