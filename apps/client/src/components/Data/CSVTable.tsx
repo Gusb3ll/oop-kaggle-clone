@@ -31,13 +31,18 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
     headers.forEach(header => {
       const values = csv.map(row => row[header])
       const numericValues = values.filter(
-        value => !isNaN(parseFloat(value as any)) && isFinite(value as any),
+        value =>
+          !isNaN(parseFloat(value as string)) && isFinite(value as number),
       )
-      const valueCount = values.length - 1
-
-      if (valueCount > 10) {
-        if (numericValues.length > 0) {
-          const counts = numericValues.reduce((acc: any, value) => {
+      if (values.length - 1 > 10) {
+        if (!numericValues.length && values.length) {
+          newChartData[header] = {
+            type: 'count',
+            totalCount: values.length - 1,
+          }
+        } else {
+          const counts = numericValues.reduce((acc, value) => {
+            // @ts-expect-error
             acc[value] = (acc[value] || 0) + 1
 
             return acc
@@ -54,16 +59,76 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
               },
             ],
           }
-        } else if (values.length) {
-          newChartData[header] = {
-            type: 'count',
-            totalCount: valueCount,
-          }
         }
-      } else if (valueCount > 0) {
+      } else if (values.length - 1 < 10 && values.length - 1 > 0) {
         newChartData[header] = {
           type: 'count',
-          totalCount: valueCount,
+          totalCount: values.length - 1,
+        }
+      }
+
+      if (values.length - 1 > 100) {
+        if (numericValues.length && values.length) {
+          const binSize = Math.ceil(
+            (Math.max(...numericValues.map(Number)) -
+              Math.min(...numericValues.map(Number))) /
+              10,
+          )
+          const bins = {}
+          numericValues.forEach(value => {
+            const binIndex = Math.floor(Number(value) / binSize) * binSize
+            // @ts-expect-error
+            bins[binIndex] = (bins[binIndex] || 0) + 1
+          })
+
+          newChartData[header] = {
+            type: 'chart',
+            labels: Object.keys(bins).map(
+              bin => `${bin}-${Number(bin) + binSize}`,
+            ),
+            datasets: [
+              {
+                label: header,
+                data: Object.values(bins),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              },
+            ],
+          }
+        } else {
+          const counts = values.reduce((acc, value) => {
+            // @ts-expect-error
+            acc[value] = (acc[value] || 0) + 1
+
+            return acc
+          }, {})
+
+          const sortedCounts = Object.entries(counts).sort(
+            // @ts-expect-error
+            (a, b) => b[1] - a[1],
+          )
+          const totalCount = values.length - 1
+
+          const stringData = sortedCounts.slice(0, 2).map(([label, count]) => ({
+            label,
+            count,
+            percentage: (((count as number) / totalCount) * 100).toFixed(0),
+          }))
+          console.log(sortedCounts.length)
+          const otherCount =
+            totalCount -
+            stringData.reduce((sum, item) => sum + (item.count as number), 0)
+          if (otherCount > 0) {
+            stringData.push({
+              label: `Other (${otherCount})`,
+              count: otherCount,
+              percentage: ((otherCount / totalCount) * 100).toFixed(0),
+            })
+          }
+
+          newChartData[header] = {
+            type: 'string',
+            stringData,
+          }
         }
       }
     })

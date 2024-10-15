@@ -24,7 +24,10 @@ type ImageData = {
 const Data: React.FC = () => {
   const [imageData, setImageData] = useState<ImageData | null>(null)
   const [isCsv, setIsCsv] = useState(false)
-  const [csvData, setCsvData] = useState<any[]>([])
+
+  const [csvData, setCsvData] = useState<{ [key: string]: number | string }[]>(
+    [],
+  )
 
   const { data: tree } = useQuery({
     queryKey: ['getPath'],
@@ -84,7 +87,7 @@ const Data: React.FC = () => {
         const buffer = Buffer.from(res.base64, 'base64')
         const csv = PapaParse.parse(buffer.toString(), { header: true })
 
-        setCsvData(csv.data)
+        setCsvData(csv.data as { [key: string]: number | string }[])
       }
     } catch (e) {
       toast.error((e as Error).message)
