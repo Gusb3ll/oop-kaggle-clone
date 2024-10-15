@@ -78,7 +78,7 @@ const Data: React.FC = () => {
         const buffer = Buffer.from(res.base64, 'base64')
         const dataSet = dicomParser.parseDicom(buffer)
 
-        const url = `wadouri://${ENDPOINT.replaceAll('http://', '').replaceAll('https//', '')}/file${renderUrl}`
+        const url = `wadouri://${ENDPOINT.replaceAll('http://', '').replaceAll('https://', '')}/file${renderUrl}`
 
         setImageData({ url, dataSet })
       } else if (res.type === 'csv') {
