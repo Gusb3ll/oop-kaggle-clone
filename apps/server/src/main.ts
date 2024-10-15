@@ -21,9 +21,9 @@ const main = async () => {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api', app, document)
 
-  app.listen(4000, '0.0.0.0').then(() => {
-    console.log('Server  at http://127.0.0.1:4000/[paths]')
-    console.log('Swagger at http://127.0.0.1:4000/api')
+  app.listen(4009, '0.0.0.0').then(() => {
+    console.log('Server  at http://127.0.0.1:4009/[paths]')
+    console.log('Swagger at http://127.0.0.1:4009/api')
   })
 }
 

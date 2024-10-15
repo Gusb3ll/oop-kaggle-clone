@@ -5,7 +5,7 @@ type ModifiedResponse<T = Record<string, unknown>> = {
 }
 
 export const ENDPOINT =
-  process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'http://127.0.0.1:4000'
+  process.env.NEXT_PUBLIC_ENDPOINT ?? 'http://127.0.0.1:4009'
 
 export const HttpStatus = {
   OK: 200,
