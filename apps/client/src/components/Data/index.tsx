@@ -136,6 +136,8 @@ const Data: React.FC = () => {
           {tree ? (
             <FolderTree
               data={addUrl(tree as PathWithUrl)}
+              initOpenStatus="closed"
+              initCheckedStatus="unchecked"
               showCheckbox={false}
               readOnly={true}
               onNameClick={handleFileClick}
