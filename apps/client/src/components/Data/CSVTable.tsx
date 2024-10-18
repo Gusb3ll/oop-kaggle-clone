@@ -3,6 +3,7 @@ import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
+  ChartOptions,
   Legend,
   LinearScale,
   Title,
@@ -53,9 +54,11 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
             labels: Object.keys(counts),
             datasets: [
               {
-                label: header,
+                label: 'count',
                 data: Object.values(counts),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                backgroundColor: '#027BA8',
+                barPercentage: 1,
+                categoryPercentage: 1,
               },
             ],
           }
@@ -69,28 +72,32 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
 
       if (values.length - 1 > 100) {
         if (numericValues.length && values.length) {
-          const binSize = Math.ceil(
-            (Math.max(...numericValues.map(Number)) -
-              Math.min(...numericValues.map(Number))) /
-              10,
-          )
+          const maxvalue = Math.max(...numericValues.map(Number))
+          const minvalue = Math.min(...numericValues.map(Number))
+          const binSize = Math.ceil((maxvalue - minvalue) / 10)
+
           const bins = {}
+
           numericValues.forEach(value => {
-            const binIndex = Math.floor(Number(value) / binSize) * binSize
-            // @ts-expect-error
+            const binIndex =
+              Math.floor((Number(value) - minvalue) / binSize) * binSize +
+              minvalue
+            //@ts-expect-error
             bins[binIndex] = (bins[binIndex] || 0) + 1
           })
 
           newChartData[header] = {
             type: 'chart',
-            labels: Object.keys(bins).map(
-              bin => `${bin}-${Number(bin) + binSize}`,
-            ),
+            labels: Object.keys(bins).map(bin => {
+              return `${Number(bin)}-${Number(bin) + binSize}`
+            }),
             datasets: [
               {
-                label: header,
+                label: 'count',
                 data: Object.values(bins),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                backgroundColor: '#027BA8',
+                barPercentage: 1,
+                categoryPercentage: 1,
               },
             ],
           }
@@ -113,7 +120,7 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
             count,
             percentage: (((count as number) / totalCount) * 100).toFixed(0),
           }))
-          console.log(sortedCounts.length)
+
           const otherCount =
             totalCount -
             stringData.reduce((sum, item) => sum + (item.count as number), 0)
@@ -158,7 +165,7 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
     }
   }
 
-  const options = {
+  const options: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -170,8 +177,11 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
       },
     },
     scales: {
+      x: {
+        ticks: { display: false },
+      },
       y: {
-        beginAtZero: true,
+        beginAtZero: false,
       },
     },
   }
@@ -205,8 +215,24 @@ const CSVTable: React.FC<CSVTableProps> = ({ csv }) => {
                       <Bar options={options} data={chartData[header]} />
                     </div>
                   ) : (
-                    <div className="flex h-32 items-center justify-center">
-                      <span className="text-lg">Data column</span>
+                    <div className="flex h-32 w-[180px] items-center justify-center">
+                      <span className="text-lg">
+                        {chartData[header]
+                          ? chartData[header].stringData.map(
+                              (v: { label: string; percentage: string }) => (
+                                <div
+                                  key={v.label}
+                                  className="flex w-full flex-row justify-between gap-8 py-1 text-sm"
+                                >
+                                  <p className="line-clamp-1">
+                                    {v.label ? v.label : 'Undefined'}
+                                  </p>
+                                  <p>{v.percentage}%</p>
+                                </div>
+                              ),
+                            )
+                          : ''}
+                      </span>
                     </div>
                   )}
                 </td>
